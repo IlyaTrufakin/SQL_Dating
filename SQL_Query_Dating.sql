@@ -104,6 +104,140 @@ ORDER BY
 --4. Показать всех стройных голубоглазых блондинок, затем всех спортивных кареглазых брюнетов,
 --а в конце их общее количество (UNION, одним запросом на SELECT)
 
+-- объединение через UNION ---------------------------------------------------------------------------------
+SELECT
+    Users.nick AS [Ник пользователя],
+    Users.user_id AS [Страница в соцсети],
+    Users.Age AS [Возраст],
+    Gender.Name AS [Пол],
+    Users.Rost AS [Рост, см],
+    Users.Ves AS [Вес, кг],
+	Eyescolor.Name AS [Цвет глаз],
+	Haircolor.Name AS [Цвет волос],
+	Figure.Name AS [Телосложение]
+FROM
+    Users
+JOIN
+    Gender ON Gender.id = Users.sex
+JOIN
+	Eyescolor ON Eyescolor.id = Users.eyes_color
+JOIN
+	Haircolor ON Haircolor.id = Users.hair_color
+JOIN
+	Figure ON Figure.id = Users.my_build
+WHERE
+    Users.sex = 2
+    AND Users.eyes_color= 4
+    AND Users.hair_color = 1
+    AND Users.my_build = 2
+
+UNION
+
+SELECT
+    Users.nick AS [Ник пользователя],
+    Users.user_id AS [Страница в соцсети],
+    Users.Age AS [Возраст],
+    Gender.Name AS [Пол],
+    Users.Rost AS [Рост, см],
+    Users.Ves AS [Вес, кг],
+	Eyescolor.Name AS [Цвет глаз],
+	Haircolor.Name AS [Цвет волос],
+	Figure.Name AS [Телосложение]
+FROM
+    Users
+JOIN
+    Gender ON Gender.id = Users.sex
+JOIN
+	Eyescolor ON Eyescolor.id = Users.eyes_color
+JOIN
+	Haircolor ON Haircolor.id = Users.hair_color
+JOIN
+	Figure ON Figure.id = Users.my_build
+WHERE
+    Users.sex = 1
+    AND Users.eyes_color= 2
+    AND Users.hair_color = 4
+    AND Users.my_build = 4
+
+ORDER BY
+	[Пол] ASC;
+
+
+
+-- одним запросом на SELECT----------------------------------------------------------------------------------
+SELECT
+    Users.nick AS [Ник пользователя],
+    Users.user_id AS [Страница в соцсети],
+    Users.Age AS [Возраст],
+    Gender.Name AS [Пол],
+    Users.Rost AS [Рост, см],
+    Users.Ves AS [Вес, кг],
+	Eyescolor.Name AS [Цвет глаз],
+	Haircolor.Name AS [Цвет волос],
+	Figure.Name AS [Телосложение]
+FROM
+    Users
+JOIN
+    Gender ON Gender.id = Users.sex
+JOIN
+	Eyescolor ON Eyescolor.id = Users.eyes_color
+JOIN
+	Haircolor ON Haircolor.id = Users.hair_color
+JOIN
+	Figure ON Figure.id = Users.my_build
+WHERE
+    (Users.sex = 2
+    AND Users.eyes_color= 4
+    AND Users.hair_color = 1
+    AND Users.my_build = 2)
+	OR
+	(Users.sex = 1
+    AND Users.eyes_color= 2
+    AND Users.hair_color = 4
+    AND Users.my_build = 4)
+
+ORDER BY
+	[Пол] ASC;
+
+
+
+--5. Показать всех программистов с пирсингом, которые к тому же умеют вышивать крестиком (Moles, Framework и Interes)
+SELECT
+    Users.nick AS [Ник пользователя],
+    Users.user_id AS [Страница в соцсети],
+    Users.Age AS [Возраст],
+    Gender.Name AS [Пол]--,
+ --   Moles.Name AS [Дефекты кожи]--,
+ --   framework.Name AS [Профессия]--,
+--	Interes.Name AS [Хобби]
+FROM
+    Users
+JOIN
+    Gender ON Gender.id = Users.sex
+JOIN
+	Users_moles ON Users_moles.user_id = Users.id
+JOIN
+	Moles ON Moles.id = Users_moles.moles_id
+JOIN
+	framework ON framework.id = Users.id_framework
+JOIN
+	Users_interes ON Users_interes.user_id = Users.id
+JOIN
+	interes ON Users_interes.interes_id = interes.id
+WHERE
+    (Users.id_framework = 1
+    AND Moles.id = 1
+    AND Users.my_build = 2)
+	OR
+	(Users.sex = 1
+    AND Users.eyes_color= 2
+    AND Users.hair_color = 4
+    AND Users.my_build = 4)
+
+ORDER BY
+	[Пол] ASC;
+
+
 
 
 
@@ -113,10 +247,6 @@ ORDER BY
 SELECT * FROM Users
 SELECT * FROM Drugs
 SELECT * FROM Smoking
-
-
-5. Показать всех программистов с пирсингом, которые к тому же умеют вышивать крестиком (Moles, Framework и Interes)
-
 6. Показать сколько подарков подарили каждому пользователю, у которого знак зодиака Рыбы
 
 7. Показать как много зарабатывают себе на жизнь полиглоты (знающие более 5 языков), совершенно не умеющие готовить
