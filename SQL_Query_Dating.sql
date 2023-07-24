@@ -206,36 +206,267 @@ SELECT
     Users.nick AS [Ник пользователя],
     Users.user_id AS [Страница в соцсети],
     Users.Age AS [Возраст],
-    Gender.Name AS [Пол]--,
- --   Moles.Name AS [Дефекты кожи]--,
- --   framework.Name AS [Профессия]--,
---	Interes.Name AS [Хобби]
+    Gender.Name AS [Пол],
+    Moles.Name AS [Дефекты кожи],
+    framework.Name AS [Профессия],
+	Interes.Name AS [Хобби]
 FROM
     Users
 JOIN
     Gender ON Gender.id = Users.sex
 JOIN
-	Users_moles ON Users_moles.user_id = Users.id
+	framework ON framework.id = Users.id_framework
+JOIN
+	Users_moles ON Users_moles.user_id = Users.user_id
 JOIN
 	Moles ON Moles.id = Users_moles.moles_id
 JOIN
-	framework ON framework.id = Users.id_framework
-JOIN
-	Users_interes ON Users_interes.user_id = Users.id
+	Users_interes ON Users_interes.user_id = Users.user_id
 JOIN
 	interes ON Users_interes.interes_id = interes.id
 WHERE
-    (Users.id_framework = 1
+    Users.id_framework = 1
     AND Moles.id = 1
-    AND Users.my_build = 2)
-	OR
-	(Users.sex = 1
-    AND Users.eyes_color= 2
-    AND Users.hair_color = 4
-    AND Users.my_build = 4)
-
+    AND interes.id = 23
 ORDER BY
-	[Пол] ASC;
+	Users.Age ASC;
+
+
+
+--6. Показать сколько подарков подарили каждому пользователю, у которого знак зодиака Рыбы
+SELECT
+    Users.nick AS [Ник пользователя],
+    Users.user_id AS [Страница в соцсети],
+    Users.Age AS [Возраст],
+    Gender.Name AS [Пол],
+    Goroskop.Name AS [Знак зодиака],
+    COUNT(*) AS [Кол-во подарков]
+FROM
+    Users
+JOIN
+    Gender ON Gender.id = Users.sex
+JOIN
+	Goroskop ON Goroskop.id = Users.id_zodiak
+JOIN
+	Gift_service ON Gift_service.id_to = Users.user_id
+WHERE
+    Users.id_zodiak = 12
+GROUP BY 
+	Users.nick, Users.user_id, Users.Age, Gender.Name, Goroskop.Name
+ORDER BY
+	[Кол-во подарков] DESC;
+
+
+--7. Показать как много зарабатывают себе на жизнь полиглоты (знающие более 5 языков), совершенно не умеющие готовить
+SELECT 
+    Users.nick AS [Ник пользователя],
+    Users.user_id AS [Страница в соцсети],
+    Users.Age AS [Возраст],
+    Gender.Name AS [Пол],
+    Richness.Name AS [Обеспеченность],
+	Kitchen.Name AS [Кулинарные навыки],
+	STRING_AGG(languages.Name, ', ') AS [Знание языков]
+    --COUNT(languages.Name) AS [Знание языков] 
+FROM
+    Users
+JOIN
+    Gender ON Gender.id = Users.sex
+JOIN
+	Richness ON Richness.id = Users.my_rich
+JOIN
+	Kitchen ON Kitchen.id = Users.like_kitchen
+JOIN
+	Users_languages ON Users_languages.user_id = Users.user_id
+JOIN
+	Languages ON Languages.id = Users_languages.Languages_id
+WHERE
+    Users.like_kitchen = 2
+GROUP BY 
+	Users.nick, Users.user_id, Users.Age, Gender.Name, Richness.Name, Kitchen.Name
+HAVING
+	COUNT(Languages.id) >= 5
+ORDER BY
+	 [Знание языков] DESC;
+
+
+
+--8. Показать всех буддистов, которые занимаются восточными единоборствами, живут на вокзале, и в свободное время катаются на скейте
+SELECT 
+	Users.nick AS [Ник пользователя],
+    Users.user_id AS [Страница в соцсети],
+    Users.Age AS [Возраст],
+    Gender.Name AS [Пол],
+    Religion.Name AS [Вероисповедание],
+	Residence.Name AS [Место проживания],
+	STRING_AGG( Sport.Name, ', ') AS [Спорт]
+FROM
+    Users
+JOIN
+    Gender ON Gender.id = Users.sex
+JOIN
+	Religion ON Religion.id = Users.religion
+JOIN
+	Users_sport ON Users_sport.user_id = Users.user_id
+JOIN
+	Sport ON Sport.id = Users_sport.sport_id
+JOIN
+	Residence ON Residence.id = Users.my_home
+WHERE
+    Users.religion = 6
+	AND Users.my_home = 9
+	AND (Sport.id = 6 OR Sport.id = 9)
+GROUP BY 
+	Users.user_id, Users.nick, Users.Age, Gender.Name, Religion.Name, Residence.Name
+ORDER BY
+	 Users.Age ASC;
+
+
+
+
+--9. Показать возрастную аудиторию пользователей в виде:
+--возраст	  кол-во    %
+-- до 18	   2000	   40.0
+-- 18-24	   1500	   30.0
+-- 24-30	   1000	   20.0
+-- от 30	    500	   10.0
+
+-- 1й вариант
+SELECT
+    CASE
+        WHEN Users.Age < 18 THEN 'до 18'
+        WHEN Users.Age BETWEEN 18 AND 24 THEN '18-24'
+        WHEN Users.Age BETWEEN 25 AND 30 THEN '24-30'
+        ELSE 'от 30'
+    END AS [возраст],
+    COUNT(*) AS [количество],
+	CAST((COUNT(*) * 100.0) / (SELECT COUNT(*) FROM Users) AS NUMERIC(10, 2)) AS [%]
+FROM
+    Users
+GROUP BY 
+    CASE
+        WHEN Users.Age < 18 THEN 'до 18'
+        WHEN Users.Age BETWEEN 18 AND 24 THEN '18-24'
+        WHEN Users.Age BETWEEN 25 AND 30 THEN '24-30'
+        ELSE 'от 30'
+   END
+ORDER BY
+    MIN(Users.Age);
+
+
+
+
+
+-- 2й вариант
+SELECT
+    'до 18' AS [возраст],
+    COUNT(*) AS [количество],
+    CAST((COUNT(*) * 100.0) / (SELECT COUNT(*) FROM Users ) AS NUMERIC(10, 2)) AS [%]
+FROM
+    Users
+WHERE
+    Users.Age < 18
+UNION 
+SELECT
+	'18-24' AS [возраст],
+    COUNT(*) AS [количество],
+	CAST((COUNT(*) * 100.0) / (SELECT COUNT(*) FROM Users) AS NUMERIC(10, 2)) AS [%]
+FROM
+    Users
+WHERE
+	Users.Age BETWEEN 18 AND 24
+UNION
+SELECT
+	'24-30' AS [возраст],
+    COUNT(*) AS [количество],
+	CAST((COUNT(*) * 100.0) / (SELECT COUNT(*) FROM Users) AS NUMERIC(10, 2)) AS [%]
+FROM
+    Users
+WHERE
+	Users.Age BETWEEN 25 AND 30
+UNION
+SELECT
+	'от 30' AS [возраст],
+    COUNT(*) AS [количество],
+	CAST((COUNT(*) * 100.0) / (SELECT COUNT(*) FROM Users) AS NUMERIC(10, 2)) AS [%]
+FROM
+    Users
+WHERE
+	Users.Age > 30
+
+
+
+
+
+--10*. Показать 5 самых популярных слов, отправленных в личных сообщениях, и то, как часто они встречаются
+
+
+
+SELECT-- TOP 5
+    UPPER(value) AS [Слова],
+    COUNT(*) AS [Случаи использования]
+FROM Messages
+--CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Messages.mess, '.', ' '), ',', ' '), '!', ' '), ':', ' '),')', ' '), ' ')
+CROSS APPLY STRING_SPLIT(REPLACE(Messages.mess, (SELECT Value FROM STRING_SPLIT('!,(,)', ',') ), ''), ' ')
+WHERE LEN(value) >= 3
+GROUP BY UPPER(value)
+ORDER BY COUNT(*) DESC;
+
+
+SELECT-- TOP 5
+    UPPER(value) AS [Слова],
+    COUNT(*) AS [Случаи использования]
+FROM Messages
+CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Messages.mess, '.', ' '), ',', ' '), '!', ' '), ':', ' '),')', ' '), ' ')
+--CROSS APPLY STRING_SPLIT(REPLACE(Messages.mess, '!)', ' '), ' ')
+WHERE LEN(value) >= 3
+GROUP BY UPPER(value)
+ORDER BY COUNT(*) DESC;
+
+
+
+
+
+
+
+
+
+SELECT-- TOP 5
+    UPPER(Messages.mess) AS [Слова],
+	COUNT(*) AS [Случаи использования]
+FROM Messages
+CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Messages.mess, '.', ' '), ',', ' '), '!', ' '), ':', ' '),')', ' '), ' ')
+--CROSS APPLY STRING_SPLIT(REPLACE(Messages.mess, '!)', ' '), ' ')
+WHERE LEN(Messages.mess) >= 3
+--GROUP BY UPPER(value)
+--ORDER BY COUNT(*) DESC;
+
+
+
+SELECT -- TOP 5
+    --UPPER(Messages.mess) AS [Слова],
+	COUNT(*) 
+FROM Messages 
+--CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Messages.mess, '.', ' '), ',', ' '), '!', ' '), ':', ' '),')', ' '), ' ')
+--CROSS APPLY STRING_SPLIT(REPLACE(Messages.mess, '!)', ' '), ' ')
+WHERE LEN(Messages.mess) >= 3
+--GROUP BY UPPER(value)
+--ORDER BY COUNT(*) DESC;
+
+
+
+SELECT Value FROM STRING_SPLIT('!,(,)', ',') 
+
+
+
+SELECT-- TOP 5
+    value AS [Слова],
+    COUNT(*) AS [Случаи использования]
+FROM Messages
+CROSS APPLY STRING_SPLIT(Messages.mess, ' ')
+WHERE LEN(value) >= 3
+GROUP BY value
+ORDER BY COUNT(*) DESC;
+
 
 
 
@@ -247,157 +478,3 @@ ORDER BY
 SELECT * FROM Users
 SELECT * FROM Drugs
 SELECT * FROM Smoking
-6. Показать сколько подарков подарили каждому пользователю, у которого знак зодиака Рыбы
-
-7. Показать как много зарабатывают себе на жизнь полиглоты (знающие более 5 языков), совершенно не умеющие готовить
-
-8. Показать всех буддистов, которые занимаются восточными единоборствами, живут на вокзале, и в свободное время катаются на скейте
-
-9. Показать возрастную аудиторию пользователей в виде:
-
-возраст	  кол-во    %
- до 18	   2000	   40.0
- 18-24	   1500	   30.0
- 24-30	   1000	   20.0
- от 30	    500	   10.0
-
-10*. Показать 5 самых популярных слов, отправленных в личных сообщениях, и то, как часто они встречаются
-
-
-
-
-
-
---1. показать горизонтальную линию из звёздочек длиной @L
---вертикально
-DECLARE @StarsCount INT = 10
-WHILE (@StarsCount>0)
-BEGIN
-  PRINT '*'
-  SET @StarsCount = @StarsCount - 1
-END
-
---горизонтально
-DECLARE @StarsCountH INT = 10
-DECLARE @String nvarchar(max) = ''
-WHILE (@StarsCountH>0)
-BEGIN
-	SET @String = @String + '*'
-	SET @StarsCountH = @StarsCountH - 1
-END
-PRINT @String
-
-
-
-
---2. скрипт проверяет, какое сейчас время суток, и выдаёт приветствие "добрый вечер!" или "добрый день!"
-DECLARE @CurrentTime TIME = GETDATE()
-DECLARE @Message NVARCHAR(max)
-
-IF @CurrentTime >= '04:30:00' AND @CurrentTime < '11:00:00'
-	SET @Message = 'Доброе утро!'
-
-ELSE IF @CurrentTime >= '11:00:00' AND @CurrentTime < '17:00:00'
-    SET @Message = 'Добрый день!'
-
-ELSE IF @CurrentTime >= '17:00:00' AND @CurrentTime < '23:00:00'
-    SET @Message = 'Добрый вечер!'
-
-ELSE
-    SET @Message = 'Доброй ночи!'
-
-PRINT @Message
-
-
-
-
---3. скрипт генерирует случайный сложный пароль длиной @PasswordLength символов
-DECLARE @PasswordLength INT = 10 --  желаемая длина пароля
-DECLARE @AvailableCharacters NVARCHAR(100) = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_+='
-DECLARE @Password NVARCHAR(max) = ''
-
-WHILE (@PasswordLength >0)
-
-BEGIN
-    DECLARE @RandomIndex INT = ROUND(RAND() * (LEN(@AvailableCharacters) - 1) + 1, 0)
-    SET @Password = @Password + SUBSTRING(@AvailableCharacters, @RandomIndex, 1)
-    SET @PasswordLength = @PasswordLength - 1
-END
-
-PRINT @Password
-
-
-
---4. показать факториалы всех чисел от 0 до 25
-DECLARE @Number INT = 0
-DECLARE @Factorial NUMERIC(38, 0) = 1
-
-WHILE (@Number <= 25)
-BEGIN
-    PRINT 'Факториал числа ' + CAST(@Number AS NVARCHAR(10)) + ': ' + CAST(@Factorial AS NVARCHAR(50))
-    SET @Number = @Number + 1
-    SET @Factorial = @Factorial * @Number
-END
-
-
-
-
---5. показать все простые числа от 3 до 100000 (я уменьшил макс.число на порядок, слишком долго подсчитывает)
-DECLARE @start INT = 3
-DECLARE @end INT = 100000
-DECLARE @primes TABLE (  Number INT) -- Создание временной таблицы для хранения информации о простых числах
-
-WHILE (@start <= @end)
-BEGIN
-  DECLARE @isPrime BIT = 1
-  DECLARE @divisor INT = 2
-
-   -- Проверка, является ли число простым
-  WHILE (@divisor * @divisor <= @start)
-  BEGIN
-    IF (@start % @divisor = 0)
-    BEGIN
-      SET @isPrime = 0
-      BREAK
-    END
-    SET @divisor = @divisor + 1
-  END
-   -- Если число простое, добавляем его в таблицу
-  IF (@isPrime = 1) INSERT INTO @primes (Number) VALUES (@start)
-
-  SET @start = @start + 1
-END
-
-SELECT Number -- Вывод таблицы простых чисел
-FROM @primes
-
-
-
-
-
-
---6. показать номера всех счастливых трамвайных билетов
-DECLARE @TicketNumber INT = 100000
-
-WHILE (@TicketNumber <= 999999)
-BEGIN
-    DECLARE @TicketString NVARCHAR(6) = RIGHT('000000' + CAST(@TicketNumber AS NVARCHAR(6)), 6) -- преобразование в строку 6 значн.
-
-	-- получение суммы 3х левых чисел
-    DECLARE @SumLeftHalf INT =
-        CAST(SUBSTRING(@TicketString, 1, 1) AS INT) +
-        CAST(SUBSTRING(@TicketString, 2, 1) AS INT) +
-        CAST(SUBSTRING(@TicketString, 3, 1) AS INT)
-
-	-- получение суммы 3х правых чисел
-    DECLARE @SumRightHalf INT =
-        CAST(SUBSTRING(@TicketString, 4, 1) AS INT) +
-        CAST(SUBSTRING(@TicketString, 5, 1) AS INT) +
-        CAST(SUBSTRING(@TicketString, 6, 1) AS INT)
-
-    IF (@SumLeftHalf = @SumRightHalf) -- сравнение сумм
-    PRINT @TicketString
-
-    SET @TicketNumber = @TicketNumber + 1
-
-END
