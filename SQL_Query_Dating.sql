@@ -398,83 +398,18 @@ WHERE
 
 
 --10*. Показать 5 самых популярных слов, отправленных в личных сообщениях, и то, как часто они встречаются
-
-
-
-SELECT-- TOP 5
+-- как то коряво получается удалять небуквенные символы - должен быть способ удобнее?
+SELECT DISTINCT TOP 5
     UPPER(value) AS [Слова],
     COUNT(*) AS [Случаи использования]
-FROM Messages
---CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Messages.mess, '.', ' '), ',', ' '), '!', ' '), ':', ' '),')', ' '), ' ')
-CROSS APPLY STRING_SPLIT(REPLACE(Messages.mess, (SELECT Value FROM STRING_SPLIT('!,(,)', ',') ), ''), ' ')
-WHERE LEN(value) >= 3
-GROUP BY UPPER(value)
-ORDER BY COUNT(*) DESC;
+FROM
+	Messages
+CROSS APPLY 
+	STRING_SPLIT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Messages.mess, '.', ' '), '?', ' '), '=', ' '), ',', ' '), '!', ' '), ':', ' '),')', ' '), ' ')
+WHERE 
+	LEN(value) >= 4
+GROUP BY 
+	UPPER(value)
+ORDER BY 
+	COUNT(*) DESC
 
-
-SELECT-- TOP 5
-    UPPER(value) AS [Слова],
-    COUNT(*) AS [Случаи использования]
-FROM Messages
-CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Messages.mess, '.', ' '), ',', ' '), '!', ' '), ':', ' '),')', ' '), ' ')
---CROSS APPLY STRING_SPLIT(REPLACE(Messages.mess, '!)', ' '), ' ')
-WHERE LEN(value) >= 3
-GROUP BY UPPER(value)
-ORDER BY COUNT(*) DESC;
-
-
-
-
-
-
-
-
-
-SELECT-- TOP 5
-    UPPER(Messages.mess) AS [Слова],
-	COUNT(*) AS [Случаи использования]
-FROM Messages
-CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Messages.mess, '.', ' '), ',', ' '), '!', ' '), ':', ' '),')', ' '), ' ')
---CROSS APPLY STRING_SPLIT(REPLACE(Messages.mess, '!)', ' '), ' ')
-WHERE LEN(Messages.mess) >= 3
---GROUP BY UPPER(value)
---ORDER BY COUNT(*) DESC;
-
-
-
-SELECT -- TOP 5
-    --UPPER(Messages.mess) AS [Слова],
-	COUNT(*) 
-FROM Messages 
---CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Messages.mess, '.', ' '), ',', ' '), '!', ' '), ':', ' '),')', ' '), ' ')
---CROSS APPLY STRING_SPLIT(REPLACE(Messages.mess, '!)', ' '), ' ')
-WHERE LEN(Messages.mess) >= 3
---GROUP BY UPPER(value)
---ORDER BY COUNT(*) DESC;
-
-
-
-SELECT Value FROM STRING_SPLIT('!,(,)', ',') 
-
-
-
-SELECT-- TOP 5
-    value AS [Слова],
-    COUNT(*) AS [Случаи использования]
-FROM Messages
-CROSS APPLY STRING_SPLIT(Messages.mess, ' ')
-WHERE LEN(value) >= 3
-GROUP BY value
-ORDER BY COUNT(*) DESC;
-
-
-
-
-
-
-
-
-
-SELECT * FROM Users
-SELECT * FROM Drugs
-SELECT * FROM Smoking
